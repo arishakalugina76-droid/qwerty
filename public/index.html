@@ -2,15 +2,25 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Конструктор заданий</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: Arial, sans-serif; background: #f0f2f5; display: flex; justify-content: center; padding: 20px; }
-    #app { max-width: 900px; width: 100%; background: white; border-radius: 16px; box-shadow: 0 8px 24px rgba(0,0,0,0.1); padding: 30px; }
-    h1, h2 { color: #333; margin-bottom: 20px; }
-    nav { display: flex; gap: 10px; margin-bottom: 25px; flex-wrap: wrap; }
-    nav button, .btn { padding: 10px 18px; border: none; border-radius: 8px; background: #007bff; color: white; cursor: pointer; font-size: 14px; transition: 0.2s; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f0f2f5; display: flex; justify-content: center; padding: 10px;
+    }
+    #app {
+      max-width: 600px; width: 100%; background: white; border-radius: 20px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.1); padding: 20px;
+    }
+    h1, h2 { color: #333; margin-bottom: 16px; font-size: 1.6rem; }
+    nav { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; }
+    nav button, .btn {
+      padding: 14px 18px; border: none; border-radius: 12px; background: #007bff;
+      color: white; cursor: pointer; font-size: 16px; min-height: 48px;
+      transition: 0.2s; touch-action: manipulation;
+    }
     nav button:hover, .btn:hover { background: #0056b3; }
     .btn-green { background: #28a745; }
     .btn-green:hover { background: #1e7e34; }
@@ -18,37 +28,66 @@
     .btn-red:hover { background: #b02a37; }
     .btn-gray { background: #6c757d; }
     .btn-gray:hover { background: #545b62; }
-    input, textarea, select { width: 100%; padding: 10px; margin: 5px 0 15px; border: 1px solid #ccc; border-radius: 6px; font-size: 14px; }
-    label { font-weight: bold; display: block; margin-top: 10px; }
-    .columns { display: flex; gap: 20px; flex-wrap: wrap; }
-    .col { flex: 1; min-width: 200px; }
-    .pair-list { margin: 10px 0; }
-    .pair-item { display: flex; gap: 10px; align-items: center; margin-bottom: 10px; background: #f9f9f9; padding: 8px; border-radius: 8px; }
-    .pair-item img { max-height: 60px; border-radius: 4px; }
-    .draggable-list { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0; }
-    .draggable-item { padding: 8px 15px; background: #e9ecef; border-radius: 8px; cursor: grab; user-select: none; }
-    .drop-zone { min-height: 100px; border: 2px dashed #ccc; border-radius: 8px; padding: 10px; margin: 10px 0; display: flex; flex-wrap: wrap; gap: 6px; }
-    .puzzle-grid { display: grid; gap: 2px; margin: 20px 0; }
-    .puzzle-cell { width: 100%; aspect-ratio: 1; background-size: cover; border: 1px solid #ddd; }
-    .quiz-question { background: #f8f9fa; padding: 15px; border-radius: 10px; margin-bottom: 15px; }
-    .task-link { word-break: break-all; background: #e9ecef; padding: 8px; border-radius: 4px; margin: 10px 0; display: block; }
+    input, textarea, select {
+      width: 100%; padding: 12px; margin: 5px 0 12px; border: 1px solid #ccc;
+      border-radius: 10px; font-size: 16px; background: #fff;
+    }
+    label { font-weight: bold; display: block; margin-top: 12px; font-size: 14px; }
+    .columns { display: flex; gap: 12px; flex-wrap: wrap; }
+    .col { flex: 1 1 160px; min-width: 150px; }
+    .pair-item {
+      display: flex; gap: 8px; align-items: center; margin-bottom: 8px;
+      background: #f9f9f9; padding: 10px; border-radius: 12px; flex-wrap: wrap;
+    }
+    .pair-item img { max-height: 44px; border-radius: 6px; }
+    .draggable-list { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0; }
+    .draggable-item {
+      padding: 12px 16px; background: #e9ecef; border-radius: 12px;
+      cursor: grab; user-select: none; font-size: 16px; touch-action: none;
+    }
+    .drop-zone {
+      min-height: 80px; border: 2px dashed #ccc; border-radius: 12px;
+      padding: 10px; margin: 8px 0; display: flex; flex-wrap: wrap; gap: 6px;
+    }
+    .puzzle-grid { display: grid; gap: 2px; margin: 15px auto; justify-content: center; }
+    .puzzle-cell {
+      width: 100%; aspect-ratio: 1; background-size: cover; border: 2px solid #ddd;
+      border-radius: 4px;
+    }
+    .quiz-question { background: #f8f9fa; padding: 14px; border-radius: 14px; margin-bottom: 14px; }
+    .task-link {
+      word-break: break-all; background: #e9ecef; padding: 10px;
+      border-radius: 10px; margin: 10px 0; display: block; font-size: 14px;
+    }
     .hidden { display: none !important; }
+
+    /* подсветка ошибок */
+    .wrong-answer { background-color: #ffe6e6 !important; outline: 2px solid #dc3545; }
+    .puzzle-cell.wrong { border-color: #dc3545; box-shadow: 0 0 8px rgba(220,53,69,0.5); }
+    .right-item.wrong-match, .left-item.wrong-match { background-color: #ffe6e6 !important; outline: 2px solid #dc3545; }
+    .draggable-item.wrong-placement { background: #ffe6e6 !important; outline: 2px solid #dc3545; }
+    label.wrong-answer { color: #dc3545; font-weight: bold; }
+
+    @media (max-width: 480px) {
+      body { padding: 5px; }
+      #app { padding: 16px; border-radius: 0; }
+      h1 { font-size: 1.4rem; }
+      .col { min-width: 100%; }
+      .pair-item { flex-direction: column; align-items: stretch; }
+      .pair-item select, .pair-item input { width: 100%; }
+    }
   </style>
 </head>
 <body>
-<div id="app">
-  <!-- Контент будет рендериться через JavaScript -->
-</div>
+<div id="app"></div>
 
 <script>
   const API = '/api/tasks';
   const app = document.getElementById('app');
-
-  let currentView = 'home'; // home, create, edit, play
+  let currentView = 'home';
   let editingTaskId = null;
   let playTaskId = null;
 
-  // Определение начального режима по URL
   window.addEventListener('load', () => {
     const path = window.location.pathname;
     if (path.startsWith('/task/')) {
@@ -72,7 +111,6 @@
     return res.json();
   }
 
-  // --- РЕНДЕРИНГ ---
   function render() {
     if (currentView === 'home') renderHome();
     else if (currentView === 'create') renderCreate();
@@ -82,153 +120,129 @@
 
   function renderHome() {
     app.innerHTML = `
-      <h1>🎓 Конструктор учебных заданий</h1>
+      <h1>🎓 Конструктор</h1>
       <nav>
-        <button onclick="startCreate('puzzle')">🧩 Новый пазл</button>
+        <button onclick="startCreate('puzzle')">🧩 Пазл</button>
         <button onclick="startCreate('matching')">🔗 Найди пару</button>
         <button onclick="startCreate('classification')">📊 Классификация</button>
         <button onclick="startCreate('quiz')">❓ Викторина</button>
       </nav>
-      <div id="savedTasks"><em>Загрузка сохранённых заданий...</em></div>
+      <div id="savedTasks"><em>Загрузка заданий...</em></div>
     `;
     loadSavedTasks();
   }
 
   async function loadSavedTasks() {
-    try {
-      const localList = JSON.parse(localStorage.getItem('myTaskIds') || '[]');
-      const listEl = document.getElementById('savedTasks');
-      if (localList.length === 0) {
-        listEl.innerHTML = '<p>Нет сохранённых заданий. Создайте новое!</p>';
-        return;
-      }
-      let html = '<h3>Мои задания:</h3><ul style="list-style:none;padding:0">';
-      for (const id of localList) {
-        try {
-          const task = await fetchTask(id);
-          html += `<li style="margin:8px 0;background:#f8f9fa;padding:10px;border-radius:8px;display:flex;justify-content:space-between;align-items:center">
-            <span>📌 ${task.title || 'Без названия'} (${task.type})</span>
-            <span>
-              <button class="btn" onclick="playTask('${id}')">▶ Играть</button>
-              <button class="btn btn-gray" onclick="editTask('${id}')">✏️ Ред.</button>
-              <button class="btn btn-green" onclick="shareTask('${id}')">🔗 Ссылка</button>
-            </span>
-          </li>`;
-        } catch(e) {}
-      }
-      html += '</ul>';
-      listEl.innerHTML = html;
-    } catch(e) {
-      console.error(e);
+    const localList = JSON.parse(localStorage.getItem('myTaskIds') || '[]');
+    const listEl = document.getElementById('savedTasks');
+    if (localList.length === 0) {
+      listEl.innerHTML = '<p>Нет сохранённых заданий. Создайте новое!</p>';
+      return;
     }
+    let html = '<h3>Мои задания:</h3><ul style="list-style:none;padding:0">';
+    for (const id of localList) {
+      try {
+        const task = await fetchTask(id);
+        html += `<li style="margin:8px 0;background:#f8f9fa;padding:10px;border-radius:12px;display:flex;justify-content:space-between;align-items:center">
+          <span>📌 ${task.title || 'Без названия'} (${task.type})</span>
+          <span>
+            <button class="btn" onclick="playTask('${id}')">▶</button>
+            <button class="btn btn-gray" onclick="editTask('${id}')">✏️</button>
+            <button class="btn btn-green" onclick="shareTask('${id}')">🔗</button>
+          </span>
+        </li>`;
+      } catch(e){}
+    }
+    html += '</ul>';
+    listEl.innerHTML = html;
   }
 
-  window.startCreate = (type) => {
-    editingTaskId = null;
-    currentView = 'create';
-    window.createType = type;
-    render();
-  };
-
-  window.editTask = async (id) => {
-    editingTaskId = id;
-    currentView = 'edit';
-    render();
-  };
-
-  window.playTask = async (id) => {
-    playTaskId = id;
-    currentView = 'play';
-    render();
-  };
-
+  window.startCreate = (type) => { editingTaskId = null; currentView = 'create'; window.createType = type; render(); };
+  window.editTask = async (id) => { editingTaskId = id; currentView = 'edit'; render(); };
+  window.playTask = async (id) => { playTaskId = id; currentView = 'play'; render(); };
   window.shareTask = (id) => {
     const link = `${window.location.origin}/task/${id}`;
-    navigator.clipboard.writeText(link).then(() => alert('Короткая ссылка скопирована:\n' + link));
+    navigator.clipboard.writeText(link).then(() => alert('Ссылка скопирована:\n' + link));
   };
 
-  // --- КОНСТРУКТОР / РЕДАКТОР ---
   function renderCreate() {
     const type = window.createType;
-    const titleByType = { puzzle: 'Создание пазла', matching: 'Найди пару', classification: 'Классификация', quiz: 'Викторина' };
-    app.innerHTML = `<h2>${titleByType[type]}</h2><div id="formContainer"></div>`;
-    if (type === 'puzzle') renderPuzzleForm();
-    else if (type === 'matching') renderMatchingForm();
-    else if (type === 'classification') renderClassificationForm();
-    else if (type === 'quiz') renderQuizForm();
+    app.innerHTML = `<h2>${getTypeTitle(type)}</h2><div id="formContainer"></div>`;
+    openForm(type);
   }
 
   function renderEdit() {
-    const id = editingTaskId;
-    fetchTask(id).then(task => {
+    fetchTask(editingTaskId).then(task => {
       window.createType = task.type;
-      app.innerHTML = `<h2>Редактирование: ${task.title || 'Без названия'}</h2><div id="formContainer"></div>`;
-      if (task.type === 'puzzle') renderPuzzleForm(task);
-      else if (task.type === 'matching') renderMatchingForm(task);
-      else if (task.type === 'classification') renderClassificationForm(task);
-      else if (task.type === 'quiz') renderQuizForm(task);
+      app.innerHTML = `<h2>Редактирование: ${task.title || ''}</h2><div id="formContainer"></div>`;
+      openForm(task.type, task);
     });
+  }
+
+  function getTypeTitle(type) {
+    return { puzzle: 'Пазл', matching: 'Найди пару', classification: 'Классификация', quiz: 'Викторина' }[type];
+  }
+
+  function openForm(type, task = null) {
+    if (type === 'puzzle') renderPuzzleForm(task);
+    else if (type === 'matching') renderMatchingForm(task);
+    else if (type === 'classification') renderClassificationForm(task);
+    else if (type === 'quiz') renderQuizForm(task);
   }
 
   // --- ФОРМЫ ---
   function renderPuzzleForm(task = null) {
-    const form = document.getElementById('formContainer');
-    form.innerHTML = `
-      <label>Название задания</label>
-      <input id="taskTitle" value="${task?.title || ''}">
-      <label>Загрузите картинку</label>
-      <input type="file" id="imageFile" accept="image/*">
-      <img id="preview" style="max-width:200px;display:${task?.data?.imageDataUrl ? 'block' : 'none'}" src="${task?.data?.imageDataUrl || ''}">
-      <label>Сетка (например 3x3)</label>
-      <input id="rows" type="number" min="2" max="6" value="${task?.data?.rows || 3}"> x
-      <input id="cols" type="number" min="2" max="6" value="${task?.data?.cols || 3}">
-      <button class="btn btn-green" id="saveBtn">Сохранить и опубликовать</button>
+    document.getElementById('formContainer').innerHTML = `
+      <label>Название</label><input id="taskTitle" value="${task?.title||''}">
+      <label>Инструкция</label><textarea id="taskInstr" rows="2">${task?.instructions||''}</textarea>
+      <label>Картинка</label><input type="file" id="imageFile" accept="image/*">
+      <img id="preview" style="max-width:200px;display:${task?.data?.imageDataUrl?'block':'none'}" src="${task?.data?.imageDataUrl||''}">
+      <label>Сетка</label>
+      <input id="rows" type="number" min="2" max="6" value="${task?.data?.rows||3}" style="width:70px"> x
+      <input id="cols" type="number" min="2" max="6" value="${task?.data?.cols||3}" style="width:70px">
+      <button class="btn btn-green" id="saveBtn">Сохранить</button>
       <button class="btn" onclick="goHome()">Назад</button>
     `;
-    document.getElementById('imageFile').addEventListener('change', (e) => {
+    document.getElementById('imageFile').onchange = e => {
       const file = e.target.files[0];
       if (!file) return;
       const reader = new FileReader();
-      reader.onload = () => {
-        document.getElementById('preview').src = reader.result;
-        document.getElementById('preview').style.display = 'block';
-      };
+      reader.onload = () => { document.getElementById('preview').src=reader.result; document.getElementById('preview').style.display='block'; };
       reader.readAsDataURL(file);
-    });
+    };
     document.getElementById('saveBtn').onclick = () => savePuzzle(task);
   }
 
   function savePuzzle(task) {
     const title = document.getElementById('taskTitle').value;
-    const rows = parseInt(document.getElementById('rows').value);
-    const cols = parseInt(document.getElementById('cols').value);
-    const preview = document.getElementById('preview');
-    if (!preview.src || !preview.src.startsWith('data:image')) return alert('Загрузите картинку!');
-    const data = { imageDataUrl: preview.src, rows, cols };
-    const taskObj = { id: task?.id || undefined, type: 'puzzle', title, data };
-    saveAndPublish(taskObj);
+    const instructions = document.getElementById('taskInstr').value;
+    const rows = +document.getElementById('rows').value;
+    const cols = +document.getElementById('cols').value;
+    const img = document.getElementById('preview');
+    if (!img.src.startsWith('data:image')) return alert('Загрузите картинку!');
+    saveAndPublish({ id: task?.id, type:'puzzle', title, instructions, data: { imageDataUrl: img.src, rows, cols } });
   }
 
   function renderMatchingForm(task = null) {
     const pairs = task?.data?.pairs || [{ left: {type:'text',content:''}, right: {type:'text',content:''} }];
-    const form = document.getElementById('formContainer');
-    form.innerHTML = `
-      <label>Название</label><input id="taskTitle" value="${task?.title || ''}">
+    document.getElementById('formContainer').innerHTML = `
+      <label>Название</label><input id="taskTitle" value="${task?.title||''}">
+      <label>Инструкция</label><textarea id="taskInstr" rows="2">${task?.instructions||''}</textarea>
       <div id="pairsContainer"></div>
-      <button class="btn" id="addPair">+ Добавить пару</button>
+      <button class="btn" id="addPair">+ Пара</button>
       <button class="btn btn-green" id="saveBtn">Сохранить</button>
       <button class="btn" onclick="goHome()">Назад</button>
     `;
     const pairsContainer = document.getElementById('pairsContainer');
     function renderPairs() {
-      pairsContainer.innerHTML = pairs.map((p, i) => `
+      pairsContainer.innerHTML = pairs.map((p,i) => `
         <div class="pair-item">
           <span>Пара ${i+1}:</span>
-          <select class="leftType" data-i="${i}"><option value="text" ${p.left.type==='text'?'selected':''}>Текст</option><option value="image" ${p.left.type==='image'?'selected':''}>Картинка (URL)</option></select>
-          <input class="leftContent" data-i="${i}" value="${p.left.content}" placeholder="Текст или URL">
+          <select class="leftType"><option value="text" ${p.left.type==='text'?'selected':''}>Текст</option><option value="image" ${p.left.type==='image'?'selected':''}>URL картинки</option></select>
+          <input class="leftContent" value="${p.left.content}" placeholder="Текст или URL">
           <span>↔</span>
-          <select class="rightType" data-i="${i}"><option value="text" ${p.right.type==='text'?'selected':''}>Текст</option><option value="image" ${p.right.type==='image'?'selected':''}>Картинка (URL)</option></select>
-          <input class="rightContent" data-i="${i}" value="${p.right.content}" placeholder="Текст или URL">
+          <select class="rightType"><option value="text" ${p.right.type==='text'?'selected':''}>Текст</option><option value="image" ${p.right.type==='image'?'selected':''}>URL картинки</option></select>
+          <input class="rightContent" value="${p.right.content}" placeholder="Текст или URL">
           <button class="btn-red" onclick="removePair(${i})">X</button>
         </div>
       `).join('');
@@ -238,27 +252,28 @@
     window.removePair = (i) => { pairs.splice(i,1); renderPairs(); };
     document.getElementById('saveBtn').onclick = () => {
       const title = document.getElementById('taskTitle').value;
+      const instructions = document.getElementById('taskInstr').value;
       const updatedPairs = [];
-      document.querySelectorAll('.pair-item').forEach((el, i) => {
+      document.querySelectorAll('.pair-item').forEach(el => {
         const leftType = el.querySelector('.leftType').value;
         const leftContent = el.querySelector('.leftContent').value;
         const rightType = el.querySelector('.rightType').value;
         const rightContent = el.querySelector('.rightContent').value;
-        updatedPairs.push({ left: {type:leftType, content:leftContent}, right: {type:rightType, content:rightContent} });
+        updatedPairs.push({ left:{type:leftType, content:leftContent}, right:{type:rightType, content:rightContent} });
       });
-      saveAndPublish({ id: task?.id, type:'matching', title, data: { pairs: updatedPairs } });
+      saveAndPublish({ id: task?.id, type:'matching', title, instructions, data: { pairs: updatedPairs } });
     };
   }
 
   function renderClassificationForm(task = null) {
     const cols = task?.data?.columns || [{name:'Группа 1'}, {name:'Группа 2'}];
     const items = task?.data?.items || [];
-    const form = document.getElementById('formContainer');
-    form.innerHTML = `
-      <label>Название</label><input id="taskTitle" value="${task?.title || ''}">
+    document.getElementById('formContainer').innerHTML = `
+      <label>Название</label><input id="taskTitle" value="${task?.title||''}">
+      <label>Инструкция</label><textarea id="taskInstr" rows="2">${task?.instructions||''}</textarea>
       <label>Количество столбцов</label><input id="colCount" type="number" min="2" max="5" value="${cols.length}">
       <div id="colsContainer"></div>
-      <h3>Элементы для классификации</h3>
+      <h3>Элементы</h3>
       <div id="itemsContainer"></div>
       <button class="btn" id="addItem">+ Элемент</button>
       <button class="btn btn-green" id="saveBtn">Сохранить</button>
@@ -266,35 +281,35 @@
     `;
     renderColsAndItems();
     document.getElementById('colCount').onchange = function() {
-      const n = parseInt(this.value);
-      const old = cols.length;
-      if (n > old) for (let i=old;i<n;i++) cols.push({name:`Группа ${i+1}`});
-      else cols.length = n;
+      const n = +this.value;
+      while(cols.length < n) cols.push({name:`Группа ${cols.length+1}`});
+      cols.length = n;
       renderColsAndItems();
     };
     document.getElementById('addItem').onclick = () => { items.push({type:'text',content:'',correctColumn:0}); renderColsAndItems(); };
     document.getElementById('saveBtn').onclick = () => {
       const title = document.getElementById('taskTitle').value;
+      const instructions = document.getElementById('taskInstr').value;
       const updatedCols = [];
       document.querySelectorAll('.col-name').forEach(el => updatedCols.push({name: el.value}));
       const updatedItems = [];
       document.querySelectorAll('.item-row').forEach(el => {
         const type = el.querySelector('.item-type').value;
         const content = el.querySelector('.item-content').value;
-        const correct = parseInt(el.querySelector('.item-correct').value);
+        const correct = +el.querySelector('.item-correct').value;
         updatedItems.push({type, content, correctColumn: correct});
       });
-      saveAndPublish({ id: task?.id, type:'classification', title, data: { columns: updatedCols, items: updatedItems } });
+      saveAndPublish({ id: task?.id, type:'classification', title, instructions, data: { columns: updatedCols, items: updatedItems } });
     };
     function renderColsAndItems() {
       document.getElementById('colsContainer').innerHTML = cols.map((c,i) => `<input class="col-name" value="${c.name}" placeholder="Название столбца ${i+1}">`).join('');
       document.getElementById('itemsContainer').innerHTML = items.map((it,i) => `
         <div class="pair-item item-row">
-          <select class="item-type"><option value="text" ${it.type==='text'?'selected':''}>Текст</option><option value="image" ${it.type==='image'?'selected':''}>Картинка (URL)</option></select>
+          <select class="item-type"><option value="text" ${it.type==='text'?'selected':''}>Текст</option><option value="image" ${it.type==='image'?'selected':''}>URL картинки</option></select>
           <input class="item-content" value="${it.content}" placeholder="Текст или URL">
-          <span>→ в столбец </span>
-          <select class="item-correct">${cols.map((c, j) => `<option value="${j}" ${it.correctColumn===j?'selected':''}>${c.name}</option>`).join('')}</select>
-          <button class="btn-red" onclick="this.parentElement.remove(); items.splice(${i},1)">X</button>
+          <span>→ столбец </span>
+          <select class="item-correct">${cols.map((c,j) => `<option value="${j}" ${it.correctColumn===j?'selected':''}>${c.name}</option>`).join('')}</select>
+          <button class="btn-red" onclick="this.parentElement.remove();">X</button>
         </div>
       `).join('');
     }
@@ -302,9 +317,9 @@
 
   function renderQuizForm(task = null) {
     const questions = task?.data?.questions || [{type:'choice', text:'', options:['',''], correct:0}];
-    const form = document.getElementById('formContainer');
-    form.innerHTML = `
-      <label>Название</label><input id="taskTitle" value="${task?.title || ''}">
+    document.getElementById('formContainer').innerHTML = `
+      <label>Название</label><input id="taskTitle" value="${task?.title||''}">
+      <label>Инструкция</label><textarea id="taskInstr" rows="2">${task?.instructions||''}</textarea>
       <div id="questionsContainer"></div>
       <button class="btn" id="addQuestion">+ Вопрос</button>
       <button class="btn btn-green" id="saveBtn">Сохранить</button>
@@ -314,33 +329,34 @@
     document.getElementById('addQuestion').onclick = () => { questions.push({type:'choice', text:'', options:['',''], correct:0}); renderQuestions(); };
     document.getElementById('saveBtn').onclick = () => {
       const title = document.getElementById('taskTitle').value;
+      const instructions = document.getElementById('taskInstr').value;
       const updatedQuestions = [];
-      document.querySelectorAll('.quiz-question').forEach((el, i) => {
+      document.querySelectorAll('.quiz-question').forEach((el,i) => {
         const type = el.querySelector('.q-type').value;
         const text = el.querySelector('.q-text').value;
         let options = [], correct = null;
         if (type === 'choice') {
           options = Array.from(el.querySelectorAll('.q-option')).map(o => o.value);
-          correct = parseInt(el.querySelector('.q-correct').value);
+          correct = +el.querySelector('.q-correct').value;
         }
         updatedQuestions.push({type, text, options, correct});
       });
-      saveAndPublish({ id: task?.id, type:'quiz', title, data: { questions: updatedQuestions } });
+      saveAndPublish({ id: task?.id, type:'quiz', title, instructions, data: { questions: updatedQuestions } });
     };
     function renderQuestions() {
       document.getElementById('questionsContainer').innerHTML = questions.map((q,i) => `
         <div class="quiz-question">
           <strong>Вопрос ${i+1}</strong>
           <select class="q-type" onchange="this.parentElement.querySelector('.choice-options').style.display=this.value==='choice'?'block':'none'">
-            <option value="choice" ${q.type==='choice'?'selected':''}>Выбор ответа</option>
+            <option value="choice" ${q.type==='choice'?'selected':''}>Выбор</option>
             <option value="open" ${q.type==='open'?'selected':''}>Открытый</option>
           </select>
           <input class="q-text" value="${q.text}" placeholder="Текст вопроса">
           <div class="choice-options" style="display:${q.type==='choice'?'block':'none'}">
-            ${(q.options||['','']).map((o, j) => `<input class="q-option" value="${o}" placeholder="Вариант ${j+1}">`).join('')}
+            ${(q.options||['','']).map((o,j) => `<input class="q-option" value="${o}" placeholder="Вариант ${j+1}">`).join('')}
             <span>Правильный индекс: </span><input class="q-correct" type="number" min="0" value="${q.correct||0}">
           </div>
-          <button class="btn-red" onclick="this.parentElement.remove();questions.splice(${i},1)">Удалить</button>
+          <button class="btn-red" onclick="this.parentElement.remove();">Удалить</button>
         </div>
       `).join('');
     }
@@ -349,26 +365,25 @@
   async function saveAndPublish(taskObj) {
     const res = await saveTask(taskObj);
     const savedId = res.id;
-    // сохраняем id в локальный список
     const list = JSON.parse(localStorage.getItem('myTaskIds') || '[]');
     if (!list.includes(savedId)) {
       list.push(savedId);
       localStorage.setItem('myTaskIds', JSON.stringify(list));
     }
     alert('Задание сохранено! ID: ' + savedId);
-    const link = `${window.location.origin}/task/${savedId}`;
-    navigator.clipboard.writeText(link).then(() => alert('Короткая ссылка скопирована:\n' + link));
+    navigator.clipboard.writeText(`${window.location.origin}/task/${savedId}`).then(() => alert('Ссылка скопирована!'));
     goHome();
   }
 
   window.goHome = () => { currentView = 'home'; render(); };
 
-  // --- РЕЖИМ ИГРЫ ---
+  // --- ИГРЫ с инструкцией и подсветкой ошибок ---
   function renderPlay() {
     if (!playTaskId) return goHome();
     fetchTask(playTaskId).then(task => {
       if (!task || task.error) { alert('Задание не найдено'); return goHome(); }
-      app.innerHTML = `<h2>${task.title || 'Задание'}</h2><div id="gameContainer"></div><button class="btn" onclick="goHome()">🏠 Домой</button>`;
+      let instructionsHtml = task.instructions ? `<div style="background:#fff3cd;padding:12px;border-radius:10px;margin-bottom:15px">📝 ${task.instructions}</div>` : '';
+      app.innerHTML = `<h2>${task.title || 'Задание'}</h2>${instructionsHtml}<div id="gameContainer"></div><button class="btn" onclick="goHome()">🏠 Домой</button>`;
       if (task.type === 'puzzle') initPuzzleGame(task.data);
       else if (task.type === 'matching') initMatchingGame(task.data);
       else if (task.type === 'classification') initClassificationGame(task.data);
@@ -379,43 +394,34 @@
   function initPuzzleGame(data) {
     const { imageDataUrl, rows, cols } = data;
     const container = document.getElementById('gameContainer');
-    container.innerHTML = `<div class="puzzle-grid" id="puzzleGrid" style="grid-template-columns:repeat(${cols},1fr);width:${cols*100}px;"></div><button class="btn btn-green" id="checkPuzzle">Проверить</button><p id="result"></p>`;
+    container.innerHTML = `<div class="puzzle-grid" id="puzzleGrid" style="grid-template-columns:repeat(${cols},1fr);width:${cols*90}px;"></div>
+      <button class="btn btn-green" id="checkPuzzle">Проверить</button><p id="result"></p>`;
     const grid = document.getElementById('puzzleGrid');
     const pieces = [];
     for (let r=0; r<rows; r++) for (let c=0; c<cols; c++) pieces.push({r,c, correctR:r, correctC:c});
-    // Перемешиваем
     pieces.sort(()=>Math.random()-0.5);
-    pieces.forEach((p, idx) => {
+    pieces.forEach(p => {
       const cell = document.createElement('div');
       cell.className = 'puzzle-cell';
       cell.style.backgroundImage = `url(${imageDataUrl})`;
-      cell.style.backgroundSize = `${cols*100}px ${rows*100}px`;
-      cell.style.backgroundPosition = `-${p.correctC*100}px -${p.correctR*100}px`;
+      cell.style.backgroundSize = `${cols*90}px ${rows*90}px`;
+      cell.style.backgroundPosition = `-${p.correctC*90}px -${p.correctR*90}px`;
       cell.draggable = true;
       cell.dataset.correctR = p.correctR;
       cell.dataset.correctC = p.correctC;
       cell.addEventListener('dragover', e=>e.preventDefault());
-      cell.addEventListener('drop', (e) => {
+      cell.addEventListener('drop', e => {
         e.preventDefault();
         const dragged = document.querySelector('.dragging');
         if (dragged && dragged !== cell) {
-          // меняем фоны
-          const tempBg = cell.style.backgroundImage;
-          const tempPos = cell.style.backgroundPosition;
-          cell.style.backgroundImage = dragged.style.backgroundImage;
-          cell.style.backgroundPosition = dragged.style.backgroundPosition;
-          dragged.style.backgroundImage = tempBg;
-          dragged.style.backgroundPosition = tempPos;
-          // меняем data атрибуты
-          const tmpR = cell.dataset.correctR, tmpC = cell.dataset.correctC;
-          cell.dataset.correctR = dragged.dataset.correctR;
-          cell.dataset.correctC = dragged.dataset.correctC;
-          dragged.dataset.correctR = tmpR;
-          dragged.dataset.correctC = tmpC;
+          [cell.style.backgroundImage, dragged.style.backgroundImage] = [dragged.style.backgroundImage, cell.style.backgroundImage];
+          [cell.style.backgroundPosition, dragged.style.backgroundPosition] = [dragged.style.backgroundPosition, cell.style.backgroundPosition];
+          [cell.dataset.correctR, dragged.dataset.correctR] = [dragged.dataset.correctR, cell.dataset.correctR];
+          [cell.dataset.correctC, dragged.dataset.correctC] = [dragged.dataset.correctC, cell.dataset.correctC];
         }
       });
-      cell.addEventListener('dragstart', (e) => { e.target.classList.add('dragging'); });
-      cell.addEventListener('dragend', (e) => { e.target.classList.remove('dragging'); });
+      cell.addEventListener('dragstart', e => e.target.classList.add('dragging'));
+      cell.addEventListener('dragend', e => e.target.classList.remove('dragging'));
       grid.appendChild(cell);
     });
     document.getElementById('checkPuzzle').onclick = () => {
@@ -423,7 +429,8 @@
       let correct = 0;
       cells.forEach((c, idx) => {
         const r = Math.floor(idx/cols), cc = idx%cols;
-        if (c.dataset.correctR == r && c.dataset.correctC == cc) correct++;
+        if (+c.dataset.correctR === r && +c.dataset.correctC === cc) { correct++; c.classList.remove('wrong'); }
+        else c.classList.add('wrong');
       });
       document.getElementById('result').textContent = `Правильно: ${correct} из ${rows*cols}`;
     };
@@ -435,16 +442,15 @@
     let html = '<div class="columns"><div class="col"><h3>Левые</h3>';
     const lefts = pairs.map((p,i)=>({...p.left, pairIndex:i}));
     const rights = pairs.map((p,i)=>({...p.right, pairIndex:i}));
-    // Перемешаем права
     rights.sort(()=>Math.random()-0.5);
-    html += lefts.map((l,i) => `<div class="draggable-item left-item" data-pair="${l.pairIndex}">${renderContent(l)}</div>`).join('');
+    html += lefts.map(l => `<div class="draggable-item left-item" data-pair="${l.pairIndex}">${renderContent(l)}</div>`).join('');
     html += '</div><div class="col"><h3>Правые</h3>';
-    html += rights.map((r,i) => `<div class="draggable-item right-item" data-pair="${r.pairIndex}">${renderContent(r)}</div>`).join('');
+    html += rights.map(r => `<div class="draggable-item right-item" data-pair="${r.pairIndex}">${renderContent(r)}</div>`).join('');
     html += '</div></div><button class="btn btn-green" id="checkMatch">Проверить</button><p id="result"></p>';
     container.innerHTML = html;
 
     let selectedLeft = null;
-    const connections = {}; // key: leftPairIdx, value: rightPairIdx
+    const connections = {};
     document.querySelectorAll('.left-item').forEach(el => {
       el.addEventListener('click', () => {
         if (selectedLeft) selectedLeft.style.outline = '';
@@ -455,9 +461,7 @@
     document.querySelectorAll('.right-item').forEach(el => {
       el.addEventListener('click', () => {
         if (!selectedLeft) return;
-        const leftPair = selectedLeft.dataset.pair;
-        const rightPair = el.dataset.pair;
-        connections[leftPair] = rightPair;
+        connections[selectedLeft.dataset.pair] = el.dataset.pair;
         selectedLeft.style.outline = '';
         selectedLeft.style.backgroundColor = '#d4edda';
         el.style.backgroundColor = '#d4edda';
@@ -466,8 +470,15 @@
     });
     document.getElementById('checkMatch').onclick = () => {
       let correct = 0;
+      document.querySelectorAll('.left-item').forEach(l => l.classList.remove('wrong-match'));
+      document.querySelectorAll('.right-item').forEach(r => r.classList.remove('wrong-match'));
       for (let i=0; i<pairs.length; i++) {
         if (connections[i] == i) correct++;
+        else {
+          document.querySelector(`.left-item[data-pair="${i}"]`).classList.add('wrong-match');
+          const wrongRightIdx = connections[i];
+          if (wrongRightIdx !== undefined) document.querySelector(`.right-item[data-pair="${wrongRightIdx}"]`).classList.add('wrong-match');
+        }
       }
       document.getElementById('result').textContent = `Правильных пар: ${correct} из ${pairs.length}`;
     };
@@ -482,22 +493,19 @@
     const { columns, items } = data;
     const container = document.getElementById('gameContainer');
     let html = '<div class="columns" id="dropZones">';
-    columns.forEach((col, i) => {
-      html += `<div class="col"><h3>${col.name}</h3><div class="drop-zone" data-col="${i}" id="zone${i}"></div></div>`;
-    });
-    html += '</div><h3>Элементы для сортировки</h3><div class="draggable-list" id="sourceItems"></div>';
+    columns.forEach((col,i) => html += `<div class="col"><h3>${col.name}</h3><div class="drop-zone" data-col="${i}"></div></div>`);
+    html += '</div><h3>Элементы</h3><div class="draggable-list" id="sourceItems"></div>';
     html += '<button class="btn btn-green" id="checkClass">Проверить</button><p id="result"></p>';
     container.innerHTML = html;
 
     const source = document.getElementById('sourceItems');
-    const shuffled = [...items].sort(()=>Math.random()-0.5);
-    shuffled.forEach((item, idx) => {
+    [...items].sort(()=>Math.random()-0.5).forEach((item,idx) => {
       const el = document.createElement('div');
       el.className = 'draggable-item';
       el.draggable = true;
       el.dataset.correct = item.correctColumn;
       el.innerHTML = item.type==='image' ? `<img src="${item.content}" style="max-height:40px">` : item.content;
-      el.addEventListener('dragstart', e => { e.dataTransfer.setData('text/plain', idx); });
+      el.addEventListener('dragstart', e => e.dataTransfer.setData('text/plain', idx));
       source.appendChild(el);
     });
     document.querySelectorAll('.drop-zone').forEach(zone => {
@@ -506,22 +514,20 @@
         e.preventDefault();
         const idx = e.dataTransfer.getData('text/plain');
         const dragged = source.children[idx];
-        if (dragged) {
-          zone.appendChild(dragged);
-          dragged.draggable = false;
-          dragged.style.cursor = 'default';
-        }
+        if (dragged) { zone.appendChild(dragged); dragged.draggable = false; }
       });
     });
     document.getElementById('checkClass').onclick = () => {
-      let correct = 0, total = items.length;
+      let correct = 0;
+      document.querySelectorAll('.draggable-item').forEach(el => el.classList.remove('wrong-placement'));
       document.querySelectorAll('.drop-zone').forEach(zone => {
         const colIdx = zone.dataset.col;
         zone.querySelectorAll('.draggable-item').forEach(el => {
           if (el.dataset.correct == colIdx) correct++;
+          else el.classList.add('wrong-placement');
         });
       });
-      document.getElementById('result').textContent = `Правильно: ${correct} из ${total}`;
+      document.getElementById('result').textContent = `Правильно: ${correct} из ${items.length}`;
     };
   }
 
@@ -529,10 +535,10 @@
     const { questions } = data;
     const container = document.getElementById('gameContainer');
     let html = '';
-    questions.forEach((q, i) => {
+    questions.forEach((q,i) => {
       html += `<div class="quiz-question"><strong>${i+1}. ${q.text}</strong>`;
       if (q.type === 'choice') {
-        html += q.options.map((opt, j) => `<label><input type="radio" name="q${i}" value="${j}"> ${opt}</label><br>`).join('');
+        html += q.options.map((opt,j) => `<label><input type="radio" name="q${i}" value="${j}"> ${opt}</label><br>`).join('');
       } else {
         html += `<textarea id="open${i}" rows="2"></textarea>`;
       }
@@ -543,28 +549,27 @@
 
     document.getElementById('checkQuiz').onclick = () => {
       let correct = 0;
-      questions.forEach((q, i) => {
+      questions.forEach((q,i) => {
+        const questionDiv = document.querySelectorAll('.quiz-question')[i];
+        questionDiv.querySelectorAll('label').forEach(l => l.classList.remove('wrong-answer'));
         if (q.type === 'choice') {
           const selected = document.querySelector(`input[name="q${i}"]:checked`);
-          if (selected && parseInt(selected.value) === q.correct) correct++;
+          if (selected && +selected.value === q.correct) correct++;
+          else {
+            questionDiv.querySelectorAll('label').forEach(l => l.classList.add('wrong-answer'));
+          }
         } else {
-          // открытый вопрос – просто показываем, что ответ принят
-          correct++;
+          correct++; // открытый считаем правильным
         }
       });
-      document.getElementById('result').textContent = `Правильных ответов: ${correct} из ${questions.length}`;
+      document.getElementById('result').textContent = `Правильных: ${correct} из ${questions.length}`;
     };
   }
 
-  // Обработка кнопки "Назад" в браузере
   window.onpopstate = () => {
     const path = window.location.pathname;
-    if (path.startsWith('/task/')) {
-      playTaskId = path.split('/task/')[1];
-      currentView = 'play';
-    } else {
-      currentView = 'home';
-    }
+    if (path.startsWith('/task/')) { playTaskId = path.split('/task/')[1]; currentView = 'play'; }
+    else currentView = 'home';
     render();
   };
 </script>
