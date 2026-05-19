@@ -1,60 +1,84 @@
 const express = require('express');
-const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
+const { Pool } = require('pg');
 
 const app = express();
 app.use(express.json({ limit: '10mb' }));
 app.use(express.static('public'));
 
-// Папка, которая не стирается на Render
-const DATA_DIR = process.env.RENDER_DISK ? '/data' : __dirname;
-const TASKS_FILE = path.join(DATA_DIR, 'tasks.json');
+// Подключение к базе данных
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: { rejectUnauthorized: false }
+});
 
-function loadTasks() {
+// Создаём таблицу при запуске
+async function initDB() {
   try {
-    if (fs.existsSync(TASKS_FILE)) {
-      return JSON.parse(fs.readFileSync(TASKS_FILE, 'utf-8'));
-    }
-  } catch (e) {
-    console.error('Ошибка чтения заданий:', e);
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS tasks (
+        id VARCHAR(20) PRIMARY KEY,
+        type VARCHAR(20) NOT NULL,
+        title TEXT NOT NULL,
+        instructions TEXT DEFAULT '',
+        data JSONB NOT NULL,
+        updated_at TIMESTAMPTZ DEFAULT NOW()
+      )
+    `);
+    console.log('База данных готова');
+  } catch (err) {
+    console.error('Ошибка инициализации БД:', err);
   }
-  return {};
 }
+initDB();
 
-function saveTasks(tasks) {
-  const dir = path.dirname(TASKS_FILE);
-  if (!fs.existsSync(dir)) {
-    fs.mkdirSync(dir, { recursive: true });
-  }
-  fs.writeFileSync(TASKS_FILE, JSON.stringify(tasks, null, 2));
-}
-
-app.post('/api/tasks', (req, res) => {
+// Сохранение задания
+app.post('/api/tasks', async (req, res) => {
   const { id, type, title, instructions, data } = req.body;
-  const tasks = loadTasks();
   let taskId = id;
   if (!taskId) {
     taskId = crypto.randomBytes(3).toString('hex');
-    while (tasks[taskId]) taskId = crypto.randomBytes(3).toString('hex');
   }
-  tasks[taskId] = {
-    id: taskId,
-    type,
-    title,
-    instructions: instructions || '',
-    data,
-    updatedAt: new Date().toISOString()
-  };
-  saveTasks(tasks);
-  res.json({ id: taskId });
+  try {
+    await pool.query(
+      `INSERT INTO tasks (id, type, title, instructions, data, updated_at)
+       VALUES ($1, $2, $3, $4, $5, NOW())
+       ON CONFLICT (id) DO UPDATE SET
+         type = EXCLUDED.type,
+         title = EXCLUDED.title,
+         instructions = EXCLUDED.instructions,
+         data = EXCLUDED.data,
+         updated_at = NOW()`,
+      [taskId, type, title, instructions || '', JSON.stringify(data)]
+    );
+    res.json({ id: taskId });
+  } catch (err) {
+    console.error('Ошибка сохранения:', err);
+    res.status(500).json({ error: 'Ошибка сохранения' });
+  }
 });
 
-app.get('/api/tasks/:id', (req, res) => {
-  const tasks = loadTasks();
-  const task = tasks[req.params.id];
-  if (!task) return res.status(404).json({ error: 'Задание не найдено' });
-  res.json(task);
+// Получение задания
+app.get('/api/tasks/:id', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM tasks WHERE id = $1', [req.params.id]);
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Задание не найдено' });
+    }
+    const row = result.rows[0];
+    res.json({
+      id: row.id,
+      type: row.type,
+      title: row.title,
+      instructions: row.instructions,
+      data: row.data,
+      updatedAt: row.updated_at
+    });
+  } catch (err) {
+    console.error('Ошибка получения:', err);
+    res.status(500).json({ error: 'Ошибка сервера' });
+  }
 });
 
 app.get('/task/:id', (req, res) => {
