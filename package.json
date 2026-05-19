@@ -1,0 +1,14 @@
+{
+  "name": "edu-games",
+  "version": "1.0.0",
+  "description": "Конструктор учебных заданий",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.22.2"
+  },
+  "author": "",
+  "license": "ISC"
+}
