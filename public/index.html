@@ -43,7 +43,7 @@
     .draggable-list { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0; }
     .draggable-item {
       padding: 12px 16px; background: #e9ecef; border-radius: 12px;
-      cursor: grab; user-select: none; font-size: 16px; touch-action: none;
+      cursor: pointer; user-select: none; font-size: 16px; touch-action: manipulation;
     }
     .drop-zone {
       min-height: 80px; border: 2px dashed #ccc; border-radius: 12px;
@@ -52,7 +52,7 @@
     .puzzle-grid { display: grid; gap: 2px; margin: 15px auto; justify-content: center; }
     .puzzle-cell {
       width: 100%; aspect-ratio: 1; background-size: cover; border: 2px solid #ddd;
-      border-radius: 4px;
+      border-radius: 4px; cursor: pointer;
     }
     .quiz-question { background: #f8f9fa; padding: 14px; border-radius: 14px; margin-bottom: 14px; }
     .task-link {
@@ -238,10 +238,10 @@
       pairsContainer.innerHTML = pairs.map((p,i) => `
         <div class="pair-item">
           <span>Пара ${i+1}:</span>
-          <select class="leftType"><option value="text" ${p.left.type==='text'?'selected':''}>Текст</option><option value="image" ${p.left.type==='image'?'selected':''}>URL картинки</option></select>
+          <select class="leftType"><option value="text" ${p.left.type==='text'?'selected':''}>Текст</option><option value="image" ${p.left.type==='image'?'selected':''}>Картинка (URL)</option></select>
           <input class="leftContent" value="${p.left.content}" placeholder="Текст или URL">
           <span>↔</span>
-          <select class="rightType"><option value="text" ${p.right.type==='text'?'selected':''}>Текст</option><option value="image" ${p.right.type==='image'?'selected':''}>URL картинки</option></select>
+          <select class="rightType"><option value="text" ${p.right.type==='text'?'selected':''}>Текст</option><option value="image" ${p.right.type==='image'?'selected':''}>Картинка (URL)</option></select>
           <input class="rightContent" value="${p.right.content}" placeholder="Текст или URL">
           <button class="btn-red" onclick="removePair(${i})">X</button>
         </div>
@@ -305,7 +305,7 @@
       document.getElementById('colsContainer').innerHTML = cols.map((c,i) => `<input class="col-name" value="${c.name}" placeholder="Название столбца ${i+1}">`).join('');
       document.getElementById('itemsContainer').innerHTML = items.map((it,i) => `
         <div class="pair-item item-row">
-          <select class="item-type"><option value="text" ${it.type==='text'?'selected':''}>Текст</option><option value="image" ${it.type==='image'?'selected':''}>URL картинки</option></select>
+          <select class="item-type"><option value="text" ${it.type==='text'?'selected':''}>Текст</option><option value="image" ${it.type==='image'?'selected':''}>Картинка (URL)</option></select>
           <input class="item-content" value="${it.content}" placeholder="Текст или URL">
           <span>→ столбец </span>
           <select class="item-correct">${cols.map((c,j) => `<option value="${j}" ${it.correctColumn===j?'selected':''}>${c.name}</option>`).join('')}</select>
@@ -391,46 +391,75 @@
     });
   }
 
+  // Пазл – работает по кликам
   function initPuzzleGame(data) {
     const { imageDataUrl, rows, cols } = data;
     const container = document.getElementById('gameContainer');
-    container.innerHTML = `<div class="puzzle-grid" id="puzzleGrid" style="grid-template-columns:repeat(${cols},1fr);width:${cols*90}px;"></div>
-      <button class="btn btn-green" id="checkPuzzle">Проверить</button><p id="result"></p>`;
+    container.innerHTML = `
+      <div class="puzzle-grid" id="puzzleGrid" style="grid-template-columns:repeat(${cols},1fr);width:${cols*90}px;"></div>
+      <button class="btn btn-green" id="checkPuzzle">Проверить</button>
+      <p id="result"></p>
+    `;
     const grid = document.getElementById('puzzleGrid');
+    let selectedCell = null;
+
     const pieces = [];
-    for (let r=0; r<rows; r++) for (let c=0; c<cols; c++) pieces.push({r,c, correctR:r, correctC:c});
-    pieces.sort(()=>Math.random()-0.5);
+    for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) pieces.push({ correctR: r, correctC: c });
+    pieces.sort(() => Math.random() - 0.5);
+
     pieces.forEach(p => {
       const cell = document.createElement('div');
       cell.className = 'puzzle-cell';
       cell.style.backgroundImage = `url(${imageDataUrl})`;
       cell.style.backgroundSize = `${cols*90}px ${rows*90}px`;
       cell.style.backgroundPosition = `-${p.correctC*90}px -${p.correctR*90}px`;
-      cell.draggable = true;
       cell.dataset.correctR = p.correctR;
       cell.dataset.correctC = p.correctC;
-      cell.addEventListener('dragover', e=>e.preventDefault());
-      cell.addEventListener('drop', e => {
-        e.preventDefault();
-        const dragged = document.querySelector('.dragging');
-        if (dragged && dragged !== cell) {
-          [cell.style.backgroundImage, dragged.style.backgroundImage] = [dragged.style.backgroundImage, cell.style.backgroundImage];
-          [cell.style.backgroundPosition, dragged.style.backgroundPosition] = [dragged.style.backgroundPosition, cell.style.backgroundPosition];
-          [cell.dataset.correctR, dragged.dataset.correctR] = [dragged.dataset.correctR, cell.dataset.correctR];
-          [cell.dataset.correctC, dragged.dataset.correctC] = [dragged.dataset.correctC, cell.dataset.correctC];
+
+      cell.addEventListener('click', () => {
+        if (!selectedCell) {
+          selectedCell = cell;
+          cell.style.outline = '3px solid blue';
+        } else if (selectedCell === cell) {
+          cell.style.outline = '';
+          selectedCell = null;
+        } else {
+          // Обмен
+          const tempBg = selectedCell.style.backgroundImage;
+          const tempPos = selectedCell.style.backgroundPosition;
+          const tempR = selectedCell.dataset.correctR;
+          const tempC = selectedCell.dataset.correctC;
+
+          selectedCell.style.backgroundImage = cell.style.backgroundImage;
+          selectedCell.style.backgroundPosition = cell.style.backgroundPosition;
+          selectedCell.dataset.correctR = cell.dataset.correctR;
+          selectedCell.dataset.correctC = cell.dataset.correctC;
+
+          cell.style.backgroundImage = tempBg;
+          cell.style.backgroundPosition = tempPos;
+          cell.dataset.correctR = tempR;
+          cell.dataset.correctC = tempC;
+
+          selectedCell.style.outline = '';
+          selectedCell = null;
         }
       });
-      cell.addEventListener('dragstart', e => e.target.classList.add('dragging'));
-      cell.addEventListener('dragend', e => e.target.classList.remove('dragging'));
+
       grid.appendChild(cell);
     });
+
     document.getElementById('checkPuzzle').onclick = () => {
       const cells = document.querySelectorAll('.puzzle-cell');
       let correct = 0;
       cells.forEach((c, idx) => {
-        const r = Math.floor(idx/cols), cc = idx%cols;
-        if (+c.dataset.correctR === r && +c.dataset.correctC === cc) { correct++; c.classList.remove('wrong'); }
-        else c.classList.add('wrong');
+        const r = Math.floor(idx / cols);
+        const cc = idx % cols;
+        if (+c.dataset.correctR === r && +c.dataset.correctC === cc) {
+          correct++;
+          c.classList.remove('wrong');
+        } else {
+          c.classList.add('wrong');
+        }
       });
       document.getElementById('result').textContent = `Правильно: ${correct} из ${rows*cols}`;
     };
@@ -475,9 +504,9 @@
       for (let i=0; i<pairs.length; i++) {
         if (connections[i] == i) correct++;
         else {
-          document.querySelector(`.left-item[data-pair="${i}"]`).classList.add('wrong-match');
+          document.querySelector(`.left-item[data-pair="${i}"]`)?.classList.add('wrong-match');
           const wrongRightIdx = connections[i];
-          if (wrongRightIdx !== undefined) document.querySelector(`.right-item[data-pair="${wrongRightIdx}"]`).classList.add('wrong-match');
+          if (wrongRightIdx !== undefined) document.querySelector(`.right-item[data-pair="${wrongRightIdx}"]`)?.classList.add('wrong-match');
         }
       }
       document.getElementById('result').textContent = `Правильных пар: ${correct} из ${pairs.length}`;
@@ -489,36 +518,52 @@
     return item.content;
   }
 
+  // Классификация – кликами
   function initClassificationGame(data) {
     const { columns, items } = data;
     const container = document.getElementById('gameContainer');
     let html = '<div class="columns" id="dropZones">';
-    columns.forEach((col,i) => html += `<div class="col"><h3>${col.name}</h3><div class="drop-zone" data-col="${i}"></div></div>`);
-    html += '</div><h3>Элементы</h3><div class="draggable-list" id="sourceItems"></div>';
+    columns.forEach((col, i) => {
+      html += `<div class="col"><h3>${col.name}</h3><div class="drop-zone" data-col="${i}"></div></div>`;
+    });
+    html += '</div><h3>Элементы для сортировки</h3><div class="draggable-list" id="sourceItems"></div>';
     html += '<button class="btn btn-green" id="checkClass">Проверить</button><p id="result"></p>';
     container.innerHTML = html;
 
+    let selectedElement = null;
     const source = document.getElementById('sourceItems');
-    [...items].sort(()=>Math.random()-0.5).forEach((item,idx) => {
+    const shuffled = [...items].sort(() => Math.random() - 0.5);
+    shuffled.forEach((item, idx) => {
       const el = document.createElement('div');
       el.className = 'draggable-item';
-      el.draggable = true;
       el.dataset.correct = item.correctColumn;
-      el.innerHTML = item.type==='image' ? `<img src="${item.content}" style="max-height:40px">` : item.content;
-      el.addEventListener('dragstart', e => e.dataTransfer.setData('text/plain', idx));
+      el.innerHTML = item.type === 'image' ? `<img src="${item.content}" style="max-height:40px">` : item.content;
+      el.addEventListener('click', () => {
+        if (selectedElement === el) {
+          el.style.outline = '';
+          selectedElement = null;
+          return;
+        }
+        if (selectedElement) selectedElement.style.outline = '';
+        selectedElement = el;
+        el.style.outline = '3px solid blue';
+      });
       source.appendChild(el);
     });
+
     document.querySelectorAll('.drop-zone').forEach(zone => {
-      zone.addEventListener('dragover', e => e.preventDefault());
-      zone.addEventListener('drop', e => {
-        e.preventDefault();
-        const idx = e.dataTransfer.getData('text/plain');
-        const dragged = source.children[idx];
-        if (dragged) { zone.appendChild(dragged); dragged.draggable = false; }
+      zone.addEventListener('click', () => {
+        if (!selectedElement) return;
+        zone.appendChild(selectedElement);
+        selectedElement.style.outline = '';
+        selectedElement.style.cursor = 'default';
+        selectedElement = null;
       });
     });
+
     document.getElementById('checkClass').onclick = () => {
       let correct = 0;
+      const total = items.length;
       document.querySelectorAll('.draggable-item').forEach(el => el.classList.remove('wrong-placement'));
       document.querySelectorAll('.drop-zone').forEach(zone => {
         const colIdx = zone.dataset.col;
@@ -527,7 +572,7 @@
           else el.classList.add('wrong-placement');
         });
       });
-      document.getElementById('result').textContent = `Правильно: ${correct} из ${items.length}`;
+      document.getElementById('result').textContent = `Правильно: ${correct} из ${total}`;
     };
   }
 
@@ -555,11 +600,9 @@
         if (q.type === 'choice') {
           const selected = document.querySelector(`input[name="q${i}"]:checked`);
           if (selected && +selected.value === q.correct) correct++;
-          else {
-            questionDiv.querySelectorAll('label').forEach(l => l.classList.add('wrong-answer'));
-          }
+          else questionDiv.querySelectorAll('label').forEach(l => l.classList.add('wrong-answer'));
         } else {
-          correct++; // открытый считаем правильным
+          correct++;
         }
       });
       document.getElementById('result').textContent = `Правильных: ${correct} из ${questions.length}`;
