@@ -68,6 +68,25 @@
     .draggable-item.wrong-placement { background: #ffe6e6 !important; outline: 2px solid #dc3545; }
     label.wrong-answer { color: #dc3545; font-weight: bold; }
 
+    .blank-select { padding: 5px; margin: 0 3px; font-size: 16px; }
+    .blank-correct { background: #d4edda; }
+    .blank-wrong { background: #ffe6e6; }
+
+    .order-slot {
+      display: inline-flex; align-items: center; justify-content: center;
+      min-width: 80px; min-height: 50px; border: 2px dashed #aaa; border-radius: 8px;
+      margin: 4px; padding: 5px; background: #f8f8f8; cursor: pointer;
+    }
+    .order-slot.filled { background: #e9ecef; border-style: solid; }
+    .order-slot.correct { background: #d4edda; border-color: #28a745; }
+    .order-slot.wrong { background: #ffe6e6; border-color: #dc3545; }
+    .order-item-list { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 15px; }
+    .order-item {
+      padding: 10px 15px; background: #e9ecef; border-radius: 12px; cursor: pointer;
+      font-size: 16px;
+    }
+    .order-item.selected { outline: 3px solid blue; }
+
     @media (max-width: 480px) {
       body { padding: 5px; }
       #app { padding: 16px; border-radius: 0; }
@@ -126,6 +145,8 @@
         <button onclick="startCreate('matching')">🔗 Найди пару</button>
         <button onclick="startCreate('classification')">📊 Классификация</button>
         <button onclick="startCreate('quiz')">❓ Викторина</button>
+        <button onclick="startCreate('fill-blanks')">📝 Вставь пропуски</button>
+        <button onclick="startCreate('order-sequence')">🔢 Расставь по порядку</button>
       </nav>
       <div id="savedTasks"><em>Загрузка заданий...</em></div>
     `;
@@ -180,7 +201,11 @@
   }
 
   function getTypeTitle(type) {
-    return { puzzle: 'Пазл', matching: 'Найди пару', classification: 'Классификация', quiz: 'Викторина' }[type];
+    const titles = {
+      puzzle: 'Пазл', matching: 'Найди пару', classification: 'Классификация',
+      quiz: 'Викторина', 'fill-blanks': 'Вставь пропуски', 'order-sequence': 'Расставь по порядку'
+    };
+    return titles[type] || type;
   }
 
   function openForm(type, task = null) {
@@ -188,9 +213,11 @@
     else if (type === 'matching') renderMatchingForm(task);
     else if (type === 'classification') renderClassificationForm(task);
     else if (type === 'quiz') renderQuizForm(task);
+    else if (type === 'fill-blanks') renderFillBlanksForm(task);
+    else if (type === 'order-sequence') renderOrderSequenceForm(task);
   }
 
-  // --- ФОРМЫ ---
+  // --- ФОРМЫ (старые без изменений) ---
   function renderPuzzleForm(task = null) {
     document.getElementById('formContainer').innerHTML = `
       <label>Название</label><input id="taskTitle" value="${task?.title||''}">
@@ -362,6 +389,62 @@
     }
   }
 
+  // НОВЫЕ ФОРМЫ
+  function renderFillBlanksForm(task = null) {
+    document.getElementById('formContainer').innerHTML = `
+      <label>Название</label><input id="taskTitle" value="${task?.title||''}">
+      <label>Инструкция</label><textarea id="taskInstr" rows="2">${task?.instructions||''}</textarea>
+      <label>Текст с пропусками</label>
+      <textarea id="textTemplate" rows="6" placeholder="Например: Столица Франции — [Париж|Марсель|Лион].">${task?.data?.textTemplate||''}</textarea>
+      <p style="color:#666; font-size:14px;">Используйте квадратные скобки: [правильный ответ|вариант1|вариант2]</p>
+      <button class="btn btn-green" id="saveBtn">Сохранить</button>
+      <button class="btn" onclick="goHome()">Назад</button>
+    `;
+    document.getElementById('saveBtn').onclick = () => {
+      const title = document.getElementById('taskTitle').value;
+      const instructions = document.getElementById('taskInstr').value;
+      const textTemplate = document.getElementById('textTemplate').value.trim();
+      if (!textTemplate) return alert('Введите текст с пропусками');
+      saveAndPublish({ id: task?.id, type:'fill-blanks', title, instructions, data: { textTemplate } });
+    };
+  }
+
+  function renderOrderSequenceForm(task = null) {
+    const elements = task?.data?.elements || [{type:'text', content:''}];
+    document.getElementById('formContainer').innerHTML = `
+      <label>Название</label><input id="taskTitle" value="${task?.title||''}">
+      <label>Инструкция</label><textarea id="taskInstr" rows="2">${task?.instructions||''}</textarea>
+      <h3>Элементы в правильном порядке</h3>
+      <div id="elementsContainer"></div>
+      <button class="btn" id="addElem">+ Элемент</button>
+      <button class="btn btn-green" id="saveBtn">Сохранить</button>
+      <button class="btn" onclick="goHome()">Назад</button>
+    `;
+    function renderElements() {
+      const container = document.getElementById('elementsContainer');
+      container.innerHTML = elements.map((el,i) => `
+        <div class="pair-item">
+          <select class="elemType"><option value="text" ${el.type==='text'?'selected':''}>Текст</option><option value="image" ${el.type==='image'?'selected':''}>Картинка (URL)</option></select>
+          <input class="elemContent" value="${el.content}" placeholder="Текст или URL">
+          <button class="btn-red" onclick="this.parentElement.remove(); elements.splice(${i},1); renderElements();">X</button>
+        </div>
+      `).join('');
+    }
+    renderElements();
+    document.getElementById('addElem').onclick = () => { elements.push({type:'text', content:''}); renderElements(); };
+    document.getElementById('saveBtn').onclick = () => {
+      const title = document.getElementById('taskTitle').value;
+      const instructions = document.getElementById('taskInstr').value;
+      const updatedElements = [];
+      document.querySelectorAll('#elementsContainer .pair-item').forEach(el => {
+        const type = el.querySelector('.elemType').value;
+        const content = el.querySelector('.elemContent').value;
+        updatedElements.push({type, content});
+      });
+      saveAndPublish({ id: task?.id, type:'order-sequence', title, instructions, data: { elements: updatedElements } });
+    };
+  }
+
   async function saveAndPublish(taskObj) {
     const res = await saveTask(taskObj);
     const savedId = res.id;
@@ -377,7 +460,7 @@
 
   window.goHome = () => { currentView = 'home'; render(); };
 
-  // --- ИГРЫ с инструкцией и подсветкой ошибок ---
+  // --- ИГРЫ ---
   function renderPlay() {
     if (!playTaskId) return goHome();
     fetchTask(playTaskId).then(task => {
@@ -388,10 +471,12 @@
       else if (task.type === 'matching') initMatchingGame(task.data);
       else if (task.type === 'classification') initClassificationGame(task.data);
       else if (task.type === 'quiz') initQuizGame(task.data);
+      else if (task.type === 'fill-blanks') initFillBlanksGame(task.data);
+      else if (task.type === 'order-sequence') initOrderSequenceGame(task.data);
     });
   }
 
-  // Пазл – работает по кликам
+  // Старые игры (пазл, matching, classification, quiz) – полностью без изменений
   function initPuzzleGame(data) {
     const { imageDataUrl, rows, cols } = data;
     const container = document.getElementById('gameContainer');
@@ -402,11 +487,9 @@
     `;
     const grid = document.getElementById('puzzleGrid');
     let selectedCell = null;
-
     const pieces = [];
     for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) pieces.push({ correctR: r, correctC: c });
     pieces.sort(() => Math.random() - 0.5);
-
     pieces.forEach(p => {
       const cell = document.createElement('div');
       cell.className = 'puzzle-cell';
@@ -415,7 +498,6 @@
       cell.style.backgroundPosition = `-${p.correctC*90}px -${p.correctR*90}px`;
       cell.dataset.correctR = p.correctR;
       cell.dataset.correctC = p.correctC;
-
       cell.addEventListener('click', () => {
         if (!selectedCell) {
           selectedCell = cell;
@@ -424,30 +506,24 @@
           cell.style.outline = '';
           selectedCell = null;
         } else {
-          // Обмен
           const tempBg = selectedCell.style.backgroundImage;
           const tempPos = selectedCell.style.backgroundPosition;
           const tempR = selectedCell.dataset.correctR;
           const tempC = selectedCell.dataset.correctC;
-
           selectedCell.style.backgroundImage = cell.style.backgroundImage;
           selectedCell.style.backgroundPosition = cell.style.backgroundPosition;
           selectedCell.dataset.correctR = cell.dataset.correctR;
           selectedCell.dataset.correctC = cell.dataset.correctC;
-
           cell.style.backgroundImage = tempBg;
           cell.style.backgroundPosition = tempPos;
           cell.dataset.correctR = tempR;
           cell.dataset.correctC = tempC;
-
           selectedCell.style.outline = '';
           selectedCell = null;
         }
       });
-
       grid.appendChild(cell);
     });
-
     document.getElementById('checkPuzzle').onclick = () => {
       const cells = document.querySelectorAll('.puzzle-cell');
       let correct = 0;
@@ -477,7 +553,6 @@
     html += rights.map(r => `<div class="draggable-item right-item" data-pair="${r.pairIndex}">${renderContent(r)}</div>`).join('');
     html += '</div></div><button class="btn btn-green" id="checkMatch">Проверить</button><p id="result"></p>';
     container.innerHTML = html;
-
     let selectedLeft = null;
     const connections = {};
     document.querySelectorAll('.left-item').forEach(el => {
@@ -518,7 +593,6 @@
     return item.content;
   }
 
-  // Классификация – кликами
   function initClassificationGame(data) {
     const { columns, items } = data;
     const container = document.getElementById('gameContainer');
@@ -529,7 +603,6 @@
     html += '</div><h3>Элементы для сортировки</h3><div class="draggable-list" id="sourceItems"></div>';
     html += '<button class="btn btn-green" id="checkClass">Проверить</button><p id="result"></p>';
     container.innerHTML = html;
-
     let selectedElement = null;
     const source = document.getElementById('sourceItems');
     const shuffled = [...items].sort(() => Math.random() - 0.5);
@@ -550,7 +623,6 @@
       });
       source.appendChild(el);
     });
-
     document.querySelectorAll('.drop-zone').forEach(zone => {
       zone.addEventListener('click', () => {
         if (!selectedElement) return;
@@ -560,7 +632,6 @@
         selectedElement = null;
       });
     });
-
     document.getElementById('checkClass').onclick = () => {
       let correct = 0;
       const total = items.length;
@@ -591,7 +662,6 @@
     });
     html += '<button class="btn btn-green" id="checkQuiz">Проверить</button><p id="result"></p>';
     container.innerHTML = html;
-
     document.getElementById('checkQuiz').onclick = () => {
       let correct = 0;
       questions.forEach((q,i) => {
@@ -606,6 +676,164 @@
         }
       });
       document.getElementById('result').textContent = `Правильных: ${correct} из ${questions.length}`;
+    };
+  }
+
+  // НОВЫЕ ИГРЫ
+  function initFillBlanksGame(data) {
+    const { textTemplate } = data;
+    const container = document.getElementById('gameContainer');
+    const segments = [];
+    const regex = /\[([^\]]+)\]/g;
+    let lastIdx = 0;
+    let match;
+    while ((match = regex.exec(textTemplate)) !== null) {
+      if (match.index > lastIdx) {
+        segments.push({ type: 'text', content: textTemplate.substring(lastIdx, match.index) });
+      }
+      const inner = match[1];
+      const parts = inner.split('|').map(s => s.trim()).filter(s => s);
+      if (parts.length === 0) continue;
+      const correct = parts[0];
+      const options = parts.slice();
+      for (let i = options.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [options[i], options[j]] = [options[j], options[i]];
+      }
+      segments.push({ type: 'blank', correct, options, index: segments.length });
+      lastIdx = match.index + match[0].length;
+    }
+    if (lastIdx < textTemplate.length) {
+      segments.push({ type: 'text', content: textTemplate.substring(lastIdx) });
+    }
+
+    let html = '<div style="line-height:2.2; font-size:16px;">';
+    let blankCounter = 0;
+    segments.forEach(seg => {
+      if (seg.type === 'text') {
+        html += seg.content.replace(/\n/g, '<br>');
+      } else {
+        html += `<select class="blank-select" id="blank${blankCounter}" data-correct="${seg.correct.replace(/"/g, '&quot;')}">`;
+        seg.options.forEach(opt => {
+          html += `<option value="${opt.replace(/"/g, '&quot;')}">${opt}</option>`;
+        });
+        html += '</select>';
+        blankCounter++;
+      }
+    });
+    html += '</div><br><button class="btn btn-green" id="checkBlanks">Проверить</button><p id="result"></p>';
+    container.innerHTML = html;
+
+    document.getElementById('checkBlanks').onclick = () => {
+      let correct = 0;
+      const total = blankCounter;
+      for (let i = 0; i < total; i++) {
+        const select = document.getElementById(`blank${i}`);
+        if (!select) continue;
+        const chosen = select.value;
+        const expected = select.dataset.correct;
+        if (chosen === expected) {
+          select.classList.add('blank-correct');
+          select.classList.remove('blank-wrong');
+          correct++;
+        } else {
+          select.classList.add('blank-wrong');
+          select.classList.remove('blank-correct');
+        }
+      }
+      document.getElementById('result').textContent = `Правильно заполнено пропусков: ${correct} из ${total}`;
+    };
+  }
+
+  function initOrderSequenceGame(data) {
+    const elements = data.elements;
+    const container = document.getElementById('gameContainer');
+    const n = elements.length;
+    const shuffled = elements.map((el, idx) => ({ ...el, correctIndex: idx })).sort(() => Math.random() - 0.5);
+
+    let html = '<h3>Перемешанные элементы</h3><div class="order-item-list" id="shuffledItems">';
+    shuffled.forEach((el, i) => {
+      html += `<div class="order-item" data-correct="${el.correctIndex}" data-content="${el.content.replace(/"/g, '&quot;')}" data-type="${el.type}">${renderContent(el)}</div>`;
+    });
+    html += '</div>';
+
+    html += '<h3>Правильный порядок</h3><div style="display:flex; flex-wrap:wrap; gap:5px;" id="slotsContainer">';
+    for (let i = 0; i < n; i++) {
+      html += `<div class="order-slot" data-slot="${i}" id="slot${i}">${i+1}</div>`;
+    }
+    html += '</div>';
+    html += '<button class="btn btn-green" id="checkOrder">Проверить</button><p id="result"></p>';
+    container.innerHTML = html;
+
+    let selectedItem = null;
+
+    document.querySelectorAll('.order-item').forEach(item => {
+      item.addEventListener('click', () => {
+        if (selectedItem === item) {
+          item.classList.remove('selected');
+          selectedItem = null;
+          return;
+        }
+        if (selectedItem) selectedItem.classList.remove('selected');
+        selectedItem = item;
+        item.classList.add('selected');
+      });
+    });
+
+    document.querySelectorAll('.order-slot').forEach(slot => {
+      slot.addEventListener('click', () => {
+        if (!selectedItem) return;
+        const slotEl = slot;
+        if (slotEl.classList.contains('filled')) {
+          const oldContent = slotEl.dataset.content;
+          const oldType = slotEl.dataset.type;
+          const oldCorrect = slotEl.dataset.correct;
+          const newItem = document.createElement('div');
+          newItem.className = 'order-item';
+          newItem.dataset.correct = oldCorrect;
+          newItem.dataset.content = oldContent;
+          newItem.dataset.type = oldType;
+          newItem.innerHTML = oldType === 'image' ? `<img src="${oldContent}" style="max-height:40px">` : oldContent;
+          newItem.addEventListener('click', function() {
+            if (selectedItem === newItem) { newItem.classList.remove('selected'); selectedItem = null; }
+            else { if(selectedItem) selectedItem.classList.remove('selected'); selectedItem = newItem; newItem.classList.add('selected'); }
+          });
+          document.getElementById('shuffledItems').appendChild(newItem);
+          slotEl.classList.remove('filled');
+          slotEl.innerHTML = slotEl.dataset.slot;
+          delete slotEl.dataset.content;
+          delete slotEl.dataset.type;
+          delete slotEl.dataset.correct;
+        }
+        const item = selectedItem;
+        slotEl.classList.add('filled');
+        slotEl.innerHTML = item.innerHTML;
+        slotEl.dataset.content = item.dataset.content;
+        slotEl.dataset.type = item.dataset.type;
+        slotEl.dataset.correct = item.dataset.correct;
+        item.remove();
+        selectedItem = null;
+      });
+    });
+
+    document.getElementById('checkOrder').onclick = () => {
+      let correct = 0;
+      document.querySelectorAll('.order-slot').forEach(slot => {
+        const slotIdx = parseInt(slot.dataset.slot);
+        const expected = slotIdx;
+        const actual = slot.dataset.correct;
+        if (slot.classList.contains('filled') && actual !== undefined && parseInt(actual) === expected) {
+          slot.classList.add('correct');
+          slot.classList.remove('wrong');
+          correct++;
+        } else if (slot.classList.contains('filled')) {
+          slot.classList.add('wrong');
+          slot.classList.remove('correct');
+        } else {
+          slot.classList.add('wrong');
+        }
+      });
+      document.getElementById('result').textContent = `Правильно: ${correct} из ${n}`;
     };
   }
 
