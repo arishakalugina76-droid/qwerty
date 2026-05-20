@@ -395,7 +395,7 @@
       <label>Название</label><input id="taskTitle" value="${task?.title||''}">
       <label>Инструкция</label><textarea id="taskInstr" rows="2">${task?.instructions||''}</textarea>
       <label>Текст с пропусками</label>
-      <textarea id="textTemplate" rows="6" placeholder="Например: Столица Франции — [Париж|Марсель|Лион].">${task?.data?.textTemplate||''}</textarea>
+      <textarea id="textTemplate" rows="6" placeholder="Например: Столица Франции — [Париж|Марсель|Лион], а самая длинная река — [Нил|Амазонка|Волга].">${task?.data?.textTemplate||''}</textarea>
       <p style="color:#666; font-size:14px;">Используйте квадратные скобки: [правильный ответ|вариант1|вариант2]</p>
       <button class="btn btn-green" id="saveBtn">Сохранить</button>
       <button class="btn" onclick="goHome()">Назад</button>
@@ -707,11 +707,14 @@
       segments.push({ type: 'text', content: textTemplate.substring(lastIdx) });
     }
 
+    // Формируем HTML – все в одной строке, переносы заменяем на пробелы
     let html = '<div style="line-height:2.2; font-size:16px;">';
     let blankCounter = 0;
     segments.forEach(seg => {
       if (seg.type === 'text') {
-        html += seg.content.replace(/\n/g, '<br>');
+        // Заменяем переносы строк на пробелы, чтобы текст был слитным
+        const cleanedText = seg.content.replace(/\n/g, ' ');
+        html += cleanedText;
       } else {
         html += `<select class="blank-select" id="blank${blankCounter}" data-correct="${seg.correct.replace(/"/g, '&quot;')}">`;
         seg.options.forEach(opt => {
